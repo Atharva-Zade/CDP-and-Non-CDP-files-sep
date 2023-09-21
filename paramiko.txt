@@ -1,0 +1,44 @@
+import paramiko
+import re
+
+# Define your Cisco device credentials and IPs/Hostnames
+devices = [
+    {"hostname": "device1.example.com", "username": "your_username", "password": "your_password"},
+    {"hostname": "device2.example.com", "username": "your_username", "password": "your_password"},
+]
+
+# Regular expression to match CDP information
+cdp_pattern = re.compile(r"Device ID: (.+?)\n")
+
+# Function to connect to a device and extract CDP information
+def extract_cdp_info(device_info):
+    try:
+        ssh_client = paramiko.SSHClient()
+        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh_client.connect(
+            device_info["hostname"],
+            username=device_info["username"],
+            password=device_info["password"],
+            timeout=5,
+        )
+
+        # Run the command to show CDP neighbors (replace with the appropriate command)
+        stdin, stdout, stderr = ssh_client.exec_command("show cdp neighbors")
+
+        # Read the command output
+        output = stdout.read().decode()
+
+        # Find CDP neighbors using regex
+        cdp_neighbors = cdp_pattern.findall(output)
+
+        print(f"CDP neighbors on {device_info['hostname']}:")
+        for neighbor in cdp_neighbors:
+            print(f"  {neighbor}")
+
+        ssh_client.close()
+    except Exception as e:
+        print(f"Error connecting to {device_info['hostname']}: {str(e)}")
+
+# Iterate through the list of devices and extract CDP information
+for device_info in devices:
+    extract_cdp_info(device_info)
